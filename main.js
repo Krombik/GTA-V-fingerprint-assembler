@@ -1,7 +1,7 @@
 const { app, BrowserWindow, globalShortcut } = require('electron');
 const Buffer = require("buffer").Buffer;
 const path = require('path');
-const robot = require("robotjs");
+// const robot = require("robotjs");
 const pixelmatch = require('pixelmatch');
 const { imprintParts, imprintStart, imprintComplete } = require('./kek');
 let mainWindow
@@ -23,6 +23,8 @@ function createWindow() {
 
 app.on('ready', createWindow);
 app.on('ready', () => {
+  const addon = require('./build/Release/addon');
+
   const mainImprintXPos = 1118;
   const mainImprintWidth = 44;
   const mainImprintYPos = 164;
@@ -31,8 +33,8 @@ app.on('ready', () => {
   const imprintPartNextPos = 144;
   const imprintPartWidth = 106;
   const imprintPartHeight = 3;
-  robot.setKeyboardDelay(30);
-  robot.setMouseDelay(30);
+  // robot.setKeyboardDelay(30);
+  // robot.setMouseDelay(30);
   const findBestWay = (coords, keys, i) => {
     let newKeys = [];
     coords.reduce((currentPos, targetPos) => {
@@ -72,50 +74,51 @@ app.on('ready', () => {
   win.hide();
   globalShortcut.register('numadd', () => {
     isOn = !isOn;
-    if (isOn) {
-      win.showInactive();
-      win.setAlwaysOnTop(true, 'screen');
-      imprintMaker = setInterval(() => {
-        if (pixelmatch(Buffer.from(imprintComplete.data), robot.screen.capture(705, 517, 15, 4).image, null, 15, 4, { threshold: 0.2 }) / imprintPartWidth < 0.01) {
-          isOn = false;
-          clearInterval(imprintMaker);
-          win.hide();
-        }
-        if (pixelmatch(Buffer.from(imprintStart.data), robot.screen.capture(460, 261, 6, 3).image, null, 6, 3, { threshold: 0.2 }) / imprintPartWidth < 0.01) {
-          const mainImprint = robot.screen.capture(mainImprintXPos, mainImprintYPos, mainImprintWidth, 1);
-          let imprintNumber = 0;
-          for (; imprintNumber < mainImprintWidth; imprintNumber++)
-            if (mainImprint.colorAt(imprintNumber, 0).indexOf('3a') !== -1)
-              break;
-          const coord = [];
-          if (imprintParts[imprintNumber] !== undefined)
-            for (let y = 0; y < 4; y++)
-              for (let x = 0; x < 2; x++)
-                if (imprintParts[imprintNumber].some(item =>
-                  pixelmatch(
-                    robot.screen.capture(imprintPartStartXPos + imprintPartNextPos * x, imprintPartStartYPos + imprintPartNextPos * y, imprintPartWidth, imprintPartHeight).image,
-                    Buffer.from(item.data),
-                    null,
-                    imprintPartWidth,
-                    imprintPartHeight,
-                    { threshold: 0.2 }
-                  ) / imprintPartWidth < 0.01
-                ))
-                  coord.push(y * 2 + x);
-          findBestWay(coord, [], 0).forEach(action => {
-            if (action === 'click') {
-              robot.mouseToggle('up', 'left');
-              robot.mouseToggle('down', 'left');
-            }
-            else robot.keyTap(action)
-          });
-          robot.keyTap("tab");
-        }
-      }, 100);
-    } else {
-      clearInterval(imprintMaker);
-      win.hide();
-    }
+    addon.add(3, 5);
+    // if (isOn) {
+    //   win.showInactive();
+    //   win.setAlwaysOnTop(true, 'screen');
+    //   imprintMaker = setInterval(() => {
+    //     if (pixelmatch(Buffer.from(imprintComplete.data), robot.screen.capture(705, 517, 15, 4).image, null, 15, 4, { threshold: 0.2 }) / imprintPartWidth < 0.01) {
+    //       isOn = false;
+    //       clearInterval(imprintMaker);
+    //       win.hide();
+    //     }
+    //     if (pixelmatch(Buffer.from(imprintStart.data), robot.screen.capture(460, 261, 6, 3).image, null, 6, 3, { threshold: 0.2 }) / imprintPartWidth < 0.01) {
+    //       const mainImprint = robot.screen.capture(mainImprintXPos, mainImprintYPos, mainImprintWidth, 1);
+    //       let imprintNumber = 0;
+    //       for (; imprintNumber < mainImprintWidth; imprintNumber++)
+    //         if (mainImprint.colorAt(imprintNumber, 0).indexOf('3a') !== -1)
+    //           break;
+    //       const coord = [];
+    //       if (imprintParts[imprintNumber] !== undefined)
+    //         for (let y = 0; y < 4; y++)
+    //           for (let x = 0; x < 2; x++)
+    //             if (imprintParts[imprintNumber].some(item =>
+    //               pixelmatch(
+    //                 robot.screen.capture(imprintPartStartXPos + imprintPartNextPos * x, imprintPartStartYPos + imprintPartNextPos * y, imprintPartWidth, imprintPartHeight).image,
+    //                 Buffer.from(item.data),
+    //                 null,
+    //                 imprintPartWidth,
+    //                 imprintPartHeight,
+    //                 { threshold: 0.2 }
+    //               ) / imprintPartWidth < 0.01
+    //             ))
+    //               coord.push(y * 2 + x);
+    //       findBestWay(coord, [], 0).forEach(action => {
+    //         if (action === 'click') {
+    //           robot.mouseToggle('up', 'left');
+    //           robot.mouseToggle('down', 'left');
+    //         }
+    //         else robot.keyTap(action)
+    //       });
+    //       robot.keyTap("tab");
+    //     }
+    //   }, 100);
+    // } else {
+    //   clearInterval(imprintMaker);
+    //   win.hide();
+    // }
   });
 });
 
