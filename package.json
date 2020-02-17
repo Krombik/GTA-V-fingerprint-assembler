@@ -1,25 +1,24 @@
 {
-  "name": "electron-quick-start",
+  "name": "gta-v-fingerprint-assembler",
   "version": "1.0.0",
-  "description": "A minimal Electron application",
+  "description": "GTA Online casino heist fingerprint assembler",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "rebuild": "npm rebuild --runtime=electron --target=7.1.9 --disturl=https://atom.io/download/atom-shell --abi=48"
   },
-  "repository": "https://github.com/electron/electron-quick-start",
+  "repository": "https://github.com/Krombik/GTA-V-fingerprint-assembler",
   "keywords": [
-    "Electron",
-    "quick",
-    "start",
-    "tutorial",
-    "demo"
+    "GTA V",
+    "GTA Online",
+    "fingerprint"
   ],
-  "author": "GitHub",
-  "license": "CC0-1.0",
+  "author": "Krombik",
+  "license": "MIT",
   "dependencies": {
-    "robotjs": "0.6.0",
-    "pixelmatch": "5.1.0"
+    "node-addon-api": "^2.0.0",
+    "pixelmatch": "5.1.0",
+    "robotjs": "0.6.0"
   },
   "devDependencies": {
     "electron": "^7.1.9",
