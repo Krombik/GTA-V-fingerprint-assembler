@@ -7,6 +7,13 @@
     "start": "electron .",
     "rebuild": "npm rebuild --runtime=electron --target=7.1.9 --disturl=https://atom.io/download/atom-shell --abi=48"
   },
+  "build": {
+    "win": {
+      "target": "portable"
+    },
+    "npmRebuild": true,
+    "nodeGypRebuild": true
+  },
   "repository": "https://github.com/Krombik/GTA-V-fingerprint-assembler",
   "keywords": [
     "GTA V",
@@ -22,6 +29,7 @@
   },
   "devDependencies": {
     "electron": "^7.1.9",
+    "electron-packager": "^14.2.1",
     "electron-rebuild": "^1.10.0"
   }
 }

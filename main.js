@@ -4,13 +4,13 @@ const path = require('path');
 const robot = require("robotjs");
 const pixelmatch = require('pixelmatch');
 const keyboard = require('./build/Release/keyboard');
-const { imprintParts, imprintStart, imprintComplete } = require('./kek');
+const { fingerprintParts, fingerprintStart, fingerprintComplete } = require('./imagesBuffer');
 
 let mainWindow;
 let indicator;
-let imprintMaker = null;
+let fingerprintMaker = null;
 
-function createWindow() {
+const createWindow = () => {
   mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
@@ -19,6 +19,13 @@ function createWindow() {
     }
   });
   mainWindow.loadFile('index.html');
+  mainWindow.on('closed', () => {
+    globalShortcut.unregisterAll();
+    mainWindow = null;
+    indicator = null;
+    clearInterval(fingerprintMaker);
+    app.quit();
+  });
 
   indicator = new BrowserWindow({
     frame: false,
@@ -32,14 +39,14 @@ function createWindow() {
   });
   indicator.hide();
 
-  const mainImprintXPos = 1118;
-  const mainImprintWidth = 44;
-  const mainImprintYPos = 164;
-  const imprintPartStartXPos = 480;
-  const imprintPartStartYPos = 278;
-  const imprintPartNextPos = 144;
-  const imprintPartWidth = 106;
-  const imprintPartHeight = 3;
+  const mainFingerprintXPos = 1118;
+  const mainFingerprintWidth = 44;
+  const mainFingerprintYPos = 164;
+  const fingerprintPartStartXPos = 480;
+  const fingerprintPartStartYPos = 278;
+  const fingerprintPartNextPos = 144;
+  const fingerprintPartWidth = 106;
+  const fingerprintPartHeight = 3;
   const findBestWay = (coords, keys, i) => {
     let newKeys = [];
     coords.reduce((currentPos, targetPos) => {
@@ -76,44 +83,44 @@ function createWindow() {
 
   let isOn = false;
   let isRunning = false;
-  globalShortcut.register('X', () => {
+  globalShortcut.register('numsub', () => {
     isOn = !isOn;
     if (isOn) {
       indicator.showInactive();
       indicator.setAlwaysOnTop(true, 'screen');
-      imprintMaker = setInterval(() => {
-        if (pixelmatch(Buffer.from(imprintComplete.data), robot.screen.capture(705, 517, 15, 4).image, null, 15, 4, { threshold: 0.2 }) / imprintPartWidth < 0.01) {
+      fingerprintMaker = setInterval(() => {
+        if (pixelmatch(Buffer.from(fingerprintComplete.data), robot.screen.capture(705, 517, 15, 4).image, null, 15, 4, { threshold: 0.2 }) / fingerprintPartWidth < 0.01) {
           isOn = false;
-          clearInterval(imprintMaker);
+          clearInterval(fingerprintMaker);
           indicator.hide();
         }
-        if (!isRunning && pixelmatch(Buffer.from(imprintStart.data), robot.screen.capture(460, 261, 6, 3).image, null, 6, 3, { threshold: 0.2 }) / imprintPartWidth < 0.01) {
+        if (!isRunning && pixelmatch(Buffer.from(fingerprintStart.data), robot.screen.capture(460, 261, 6, 3).image, null, 6, 3, { threshold: 0.2 }) / fingerprintPartWidth < 0.01) {
           isRunning = true;
-          const mainImprint = robot.screen.capture(mainImprintXPos, mainImprintYPos, mainImprintWidth, 1);
-          let imprintNumber = 0;
-          for (; imprintNumber < mainImprintWidth; imprintNumber++)
-            if (mainImprint.colorAt(imprintNumber, 0).indexOf('3a') !== -1)
+          const mainFingerprint = robot.screen.capture(mainFingerprintXPos, mainFingerprintYPos, mainFingerprintWidth, 1);
+          let fingerprintNumber = 0;
+          for (; fingerprintNumber < mainFingerprintWidth; fingerprintNumber++)
+            if (mainFingerprint.colorAt(fingerprintNumber, 0).indexOf('3a') !== -1)
               break;
           const coord = [];
-          if (imprintParts[imprintNumber] !== undefined)
+          if (fingerprintParts[fingerprintNumber] !== undefined)
             for (let y = 0; y < 4; y++)
               for (let x = 0; x < 2; x++)
-                if (imprintParts[imprintNumber].some(item =>
+                if (fingerprintParts[fingerprintNumber].some(item =>
                   pixelmatch(
-                    robot.screen.capture(imprintPartStartXPos + imprintPartNextPos * x, imprintPartStartYPos + imprintPartNextPos * y, imprintPartWidth, imprintPartHeight).image,
+                    robot.screen.capture(fingerprintPartStartXPos + fingerprintPartNextPos * x, fingerprintPartStartYPos + fingerprintPartNextPos * y, fingerprintPartWidth, fingerprintPartHeight).image,
                     Buffer.from(item.data),
                     null,
-                    imprintPartWidth,
-                    imprintPartHeight,
+                    fingerprintPartWidth,
+                    fingerprintPartHeight,
                     { threshold: 0.2 }
-                  ) / imprintPartWidth < 0.01
+                  ) / fingerprintPartWidth < 0.01
                 ))
                   coord.push(y * 2 + x);
           isRunning = keyboard.sendKey(findBestWay(coord, [], 0));
         }
       }, 50);
     } else {
-      clearInterval(imprintMaker);
+      clearInterval(fingerprintMaker);
       indicator.hide();
     }
   });
@@ -121,19 +128,11 @@ function createWindow() {
 
 app.on('ready', createWindow);
 
-app.on('will-quit', () => {
-  globalShortcut.unregisterAll();
-  mainWindow = null;
-  indicator = null;
-  clearInterval(imprintMaker);
-  app.quit();
-})
-
 app.on('window-all-closed', function () {
   if (process.platform !== 'darwin') app.quit();
-})
+});
 
 app.on('activate', function () {
   if (mainWindow === null) createWindow();
-})
+});
 
