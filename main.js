@@ -1,9 +1,8 @@
-const { app, BrowserWindow, globalShortcut } = require('electron');
-const Buffer = require("buffer").Buffer;
+const { app, BrowserWindow } = require('electron');
+const { Buffer } = require("buffer");
 const path = require('path');
-const robot = require("robotjs");
 const pixelmatch = require('pixelmatch');
-const keyboard = require('./build/Release/keyboard');
+const { Hardware, getWindow, GlobalHotkey } = require("keysender");
 const { fingerprintParts, fingerprintStart, fingerprintComplete } = require('./imagesBuffer');
 
 let mainWindow;
@@ -20,7 +19,7 @@ const createWindow = () => {
   });
   mainWindow.loadFile('index.html');
   mainWindow.on('closed', () => {
-    globalShortcut.unregisterAll();
+    GlobalHotkey.unregisterAll();
     mainWindow = null;
     indicator = null;
     clearInterval(fingerprintMaker);
@@ -80,23 +79,21 @@ const createWindow = () => {
     else[nextCoords[1], nextCoords[2]] = [nextCoords[2], nextCoords[1]];
     return findBestWay(nextCoords, newKeys, i + 1);
   }
-
   let isOn = false;
-  let isRunning = false;
-  globalShortcut.register('numsub', () => {
+  const gta = new Hardware(getWindow("Grand Theft Auto V"));
+  GlobalHotkey.register("num-", () => {
     isOn = !isOn;
     if (isOn) {
       indicator.showInactive();
       indicator.setAlwaysOnTop(true, 'screen');
       fingerprintMaker = setInterval(() => {
-        if (pixelmatch(Buffer.from(fingerprintComplete.data), robot.screen.capture(705, 517, 15, 4).image, null, 15, 4, { threshold: 0.2 }) / fingerprintPartWidth < 0.01) {
+        if (pixelmatch(Buffer.from(fingerprintComplete), gta.workwindow.capture(705, 517, 15, 4).data, null, 15, 4, { threshold: 0.2 }) / fingerprintPartWidth < 0.01) {
           isOn = false;
           clearInterval(fingerprintMaker);
           indicator.hide();
         }
-        if (!isRunning && pixelmatch(Buffer.from(fingerprintStart.data), robot.screen.capture(460, 261, 6, 3).image, null, 6, 3, { threshold: 0.2 }) / fingerprintPartWidth < 0.01) {
-          isRunning = true;
-          const mainFingerprint = robot.screen.capture(mainFingerprintXPos, mainFingerprintYPos, mainFingerprintWidth, 1);
+        if (pixelmatch(Buffer.from(fingerprintStart), gta.workwindow.capture(460, 261, 6, 3).data, null, 6, 3, { threshold: 0.2 }) / fingerprintPartWidth < 0.01) {
+          const mainFingerprint = gta.workwindow.capture(mainFingerprintXPos, mainFingerprintYPos, mainFingerprintWidth, 1);
           let fingerprintNumber = 0;
           for (; fingerprintNumber < mainFingerprintWidth; fingerprintNumber++)
             if (mainFingerprint.colorAt(fingerprintNumber, 0).indexOf('3a') !== -1)
@@ -107,8 +104,8 @@ const createWindow = () => {
               for (let x = 0; x < 2; x++)
                 if (fingerprintParts[fingerprintNumber].some(item =>
                   pixelmatch(
-                    robot.screen.capture(fingerprintPartStartXPos + fingerprintPartNextPos * x, fingerprintPartStartYPos + fingerprintPartNextPos * y, fingerprintPartWidth, fingerprintPartHeight).image,
-                    Buffer.from(item.data),
+                    gta.workwindow.capture(fingerprintPartStartXPos + fingerprintPartNextPos * x, fingerprintPartStartYPos + fingerprintPartNextPos * y, fingerprintPartWidth, fingerprintPartHeight).data,
+                    Buffer.from(item),
                     null,
                     fingerprintPartWidth,
                     fingerprintPartHeight,
@@ -116,7 +113,7 @@ const createWindow = () => {
                   ) / fingerprintPartWidth < 0.01
                 ))
                   coord.push(y * 2 + x);
-          isRunning = keyboard.sendKey(findBestWay(coord, [], 0));
+          gta.keyboard.sendKeys(findBestWay(coord, [], 0));
         }
       }, 50);
     } else {
